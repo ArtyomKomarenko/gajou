@@ -1,8 +1,7 @@
 import logging
 
-from requests import Response, Session
+from requests import Response, Session, PreparedRequest
 
-from .curlify import to_curl
 from .errors.access_error import AccessError
 from .errors.auth_error import AuthError
 from .errors.bad_request_error import BadRequestError
@@ -45,7 +44,7 @@ class BaseHTTP:
         response = callback(self._path(url), **kwargs)
         self._log_response(response, skip_body)
         try:
-            curl = to_curl(response.request)
+            curl = to_curl(response.request, skip_headers=True)
             self._attach_to_allure(curl, 'curl')
             self.log.info(f'curl: {curl}')  # noqa: E800
         except UnicodeDecodeError:  # curlify can fall when decoding request body
@@ -115,3 +114,37 @@ class BaseHTTP:
                 raise BaseApiError('Client', response)
         elif 500 <= response.status_code < 600:
             raise ServerError(response)
+
+
+def to_curl(request: PreparedRequest, compressed: bool = False, verify: bool = True, skip_headers: bool = True) -> str:
+    """ Inner implementation of curlify until new version with https://github.com/ofw/curlify/pull/27
+
+    Parameters
+    ----------
+        :param request: PreparedRequest object from requests.Response
+        :param compressed: If `True` then `--compressed` argument will be added to result
+        :param verify: If `True` then `--insecure` argument will be added to result
+        :param skip_headers: If 'True' then headers [Accept, Accept-Encoding, Connection, User-Agent] will be skipped
+    """
+    curl = f'curl -X {request.method}'
+
+    sys_headers = ['accept', 'accept-encoding', 'connection', 'user-agent', 'content-length']
+    for k, v in request.headers.items():
+        if skip_headers and k.lower() in sys_headers:
+            continue
+        curl += f" -H '{k}: {v}'"
+
+    if request.body:
+        body = request.body
+        if isinstance(body, bytes):
+            body = body.decode('utf-8')
+        curl += f" -d '{body}'"
+
+    curl += f' {request.url}'
+
+    if compressed:
+        curl += ' --compressed'
+    if not verify:
+        curl += ' --insecure'
+
+    return curl

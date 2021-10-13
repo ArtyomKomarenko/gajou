@@ -3,6 +3,7 @@ import time
 from subprocess import PIPE, Popen
 
 from .cli_response import CLIResponse
+from .return_codes import ReturnCodes
 
 
 class BaseCLI:
@@ -41,4 +42,4 @@ class BaseCLI:
         end_time = time.time()
         self._log_response(process, output, error, start_time, end_time)
 
-        return CLIResponse(status=process.returncode, output=output, error=error)
+        return CLIResponse(status=ReturnCodes(process.returncode), output=output, error=error)

@@ -1,5 +1,6 @@
 import logging
 
+from google.protobuf.json_format import MessageToDict
 from grpc import (RpcError,
                   StreamUnaryClientInterceptor, StreamStreamClientInterceptor,
                   UnaryUnaryClientInterceptor, UnaryStreamClientInterceptor)
@@ -24,13 +25,13 @@ class BaseInterceptor(UnaryUnaryClientInterceptor, UnaryStreamClientInterceptor,
         return response
 
     def _log_request(self, method, data):
-        body = '{' + str(data).rstrip('\n').replace('\n', ', ') + '}'
+        body = MessageToDict(data)
         self.logger.info(f'gRPC {method} {body}')
         if self.allure:
             self.allure.attach(f'{method} {body}', 'Request', self.allure.attachment_type.TEXT)
 
     def _log_response(self, response):
-        body = '{' + str(response.result()).rstrip('\n').replace('\n', ', ') + '}'
+        body = MessageToDict(response.result())
         self.logger.info(f'Response: {body}')
         if self.allure:
             self.allure.attach(body, 'Response', self.allure.attachment_type.TEXT)

@@ -34,7 +34,7 @@ class BaseInterceptor(UnaryUnaryClientInterceptor, UnaryStreamClientInterceptor,
         body = MessageToDict(response.result())
         self.logger.info(f'Response: {body}')
         if self.allure:
-            self.allure.attach(body, 'Response', self.allure.attachment_type.TEXT)
+            self.allure.attach(f'{body}', 'Response', self.allure.attachment_type.TEXT)
 
     def _raise_for_status(self, response):
         if not isinstance(response, RpcError):

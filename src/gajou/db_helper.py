@@ -62,23 +62,35 @@ class PostgresHelper:
 
     def select_one(self, sql_select_query, use_cache=False):
         self._verify(sql_select_query, 'SELECT')
-        return self._select(sql_select_query, fetch_one=True, use_cache=use_cache)
+        result = self._select(sql_select_query, fetch_one=True, use_cache=use_cache)
+        self._log.info(f'SQL result: {dict(result)}')
+        return result
 
     def select_all(self, sql_select_query, use_cache=False):
         self._verify(sql_select_query, 'SELECT')
-        return self._select(sql_select_query, fetch_one=False, use_cache=use_cache)
+        result = self._select(sql_select_query, fetch_one=False, use_cache=use_cache)
+        self._log.info(f'SQL selected: {len(result)}')
+        if result:
+            self._log.info(f'SQL first item: {dict(result[0])}')
+        return result
 
     def update(self, sql_update_query):
         self._verify(sql_update_query, 'UPDATE')
-        return self._execute(sql_update_query)
+        result = self._execute(sql_update_query)
+        self._log.info(f'SQL updated: {result}')
+        return result
 
     def insert(self, sql_insert_query):
         self._verify(sql_insert_query, 'INSERT')
-        return self._insert(sql_insert_query)
+        result = self._insert(sql_insert_query)
+        self._log.info(f'SQL last id: {result}')
+        return result
 
     def delete(self, sql_delete_query):
         self._verify(sql_delete_query, 'DELETE')
-        return self._execute(sql_delete_query)
+        result = self._execute(sql_delete_query)
+        self._log.info(f'SQL deleted: {result}')
+        return result
 
 
 class DatabaseError(Exception):
